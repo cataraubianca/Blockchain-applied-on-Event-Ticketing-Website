@@ -12,7 +12,15 @@ contract EventTicketing is ERC721URIStorage, Ownable {
         uint256 price;
         string qrCode;
         uint256 resaleCount;
+        // New fields:
+        string seatNumber;
+        string zone;
+        string seatTime;
     }
+
+    string public venueName;
+    string public venueLocation;
+    string public eventDateTime;
 
     mapping(uint256 => Ticket) public tickets;
     mapping(address => uint256) public userTicketCount;
@@ -26,7 +34,15 @@ contract EventTicketing is ERC721URIStorage, Ownable {
     event TicketResold(uint256 indexed ticketId, address indexed buyer, uint256 price);
     event TicketListedForResale(uint256 indexed ticketId, uint256 price);
 
-    constructor(uint256 _ticketPrice, uint256 _maxResales, uint256 _maxTicketsPerUser, uint256 _royaltyPercentage)
+    constructor(
+        uint256 _ticketPrice, 
+        uint256 _maxResales, 
+        uint256 _maxTicketsPerUser, 
+        uint256 _royaltyPercentage,
+        string memory _venueName,
+        string memory _venueLocation,
+        string memory _eventDateTime
+    )
         ERC721("EventTicketing", "ETKT")
         Ownable(msg.sender)
     {
@@ -34,13 +50,24 @@ contract EventTicketing is ERC721URIStorage, Ownable {
         maxResales = _maxResales;
         maxTicketsPerUser = _maxTicketsPerUser;
         royaltyPercentage = _royaltyPercentage;
+
+        venueName = _venueName;
+        venueLocation = _venueLocation;
+        eventDateTime = _eventDateTime;
     }
 
     function generateQRCodeData(uint256 ticketId) internal pure returns (string memory) {
         return string(abi.encodePacked("QRCODE:TicketID:", Strings.toString(ticketId)));
     }
 
-    function purchaseTicket() public payable {
+    function purchaseTicket(
+        string memory _seatNumber,
+        string memory _zone,
+        string memory _seatTime
+    ) 
+        public 
+        payable 
+    {
         require(msg.value == ticketPrice, "Incorrect ticket price");
         require(userTicketCount[msg.sender] < maxTicketsPerUser, "Exceeded max tickets per user");
 
@@ -55,7 +82,10 @@ contract EventTicketing is ERC721URIStorage, Ownable {
             isForSale: false,
             price: ticketPrice,
             qrCode: qrCodeData,
-            resaleCount: 0
+            resaleCount: 0,
+            seatNumber: _seatNumber,
+            zone: _zone,
+            seatTime: _seatTime
         });
 
         userTicketCount[msg.sender]++;
@@ -103,5 +133,6 @@ contract EventTicketing is ERC721URIStorage, Ownable {
         require(tickets[ticketId].owner == msg.sender, "Not the ticket owner");
         return tickets[ticketId].qrCode;
     }
+
     receive() external payable {}
 }
