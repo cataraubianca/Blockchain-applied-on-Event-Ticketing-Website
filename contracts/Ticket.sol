@@ -103,4 +103,5 @@ contract EventTicketing is ERC721URIStorage, Ownable {
         require(tickets[ticketId].owner == msg.sender, "Not the ticket owner");
         return tickets[ticketId].qrCode;
     }
+    receive() external payable {}
 }
